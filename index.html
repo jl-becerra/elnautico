@@ -465,12 +465,12 @@ function renderCal(){
       // Red dot if eliminated (has a DB record marking them as removed)
       if(isElim||isBaja){
         dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
-        if(isBaja) bg=color+'66'; // darker tint for baja days
       }
     }
     const border=works&&!isSel?'0.5px solid '+color+'55':'0.5px solid var(--border)';
+    const numStyle='font-size:14px;font-weight:'+(works||isSel?700:400)+';color:'+numColor+';'+(isBaja?'text-decoration:line-through;':'');
     html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="border-radius:8px;background:'+bg+';border:'+border+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px">'
-      +'<div style="font-size:14px;font-weight:'+(works||isSel?700:400)+';color:'+numColor+'">'+d+'</div>'+dot+'</div>';
+      +'<div style="'+numStyle+'">'+d+'</div>'+dot+'</div>';
   }
   html+='</div>';
   document.getElementById('cal-wrap').innerHTML=html;
