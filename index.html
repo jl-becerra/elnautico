@@ -505,6 +505,13 @@ async function selectDay(date){
         ?'<div style="font-size:32px;margin-bottom:8px">🏥</div><div style="font-size:16px;font-weight:700;color:#888">Baja médica</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Este día estás de baja</div>'
         :'<div style="font-size:32px;margin-bottom:8px">❌</div><div style="font-size:16px;font-weight:700;color:var(--text2)">No trabajas este día</div>')
       +'</div></div>';
+    // Refresh monthMods so calendar dot updates
+    try{
+      const rows=await supa.get('horarios_dia','fecha=eq.'+fmtD(date)+'&personal_id=eq.'+p.db_id);
+      if(rows.length) monthMods[date.getDate()]=rows[0];
+      else delete monthMods[date.getDate()];
+      renderCal();
+    }catch(e){}
     return;
   }
 
