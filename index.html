@@ -378,15 +378,44 @@ function setMonth(m,btn){
 }
 
 // ── RENDER MES ─────────────────────────────────────────────────────
-function renderMonth(){
+let monthMods={}; // {day: [mods]} cache for current month
+
+async function renderMonth(){
   const p=curUser;
   const year=2026;
   const dim=new Date(year,curMonth+1,0).getDate();
-  const workDays=new Set();
-  for(let d=1;d<=dim;d++){if(isAvail(p,new Date(year,curMonth,d)))workDays.add(d);}
-  const totalH=workDays.size*parseShifts(p.hor).reduce((a,s)=>a+calcH(s.entrada,s.salida),0);
+  document.getElementById('days-content').innerHTML='<div id="cal-wrap"><div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">Cargando...</div></div><div id="day-detail"></div>';
+
+  // Load all modifications for this month in one query
+  const from=year+'-'+String(curMonth+1).padStart(2,'0')+'-01';
+  const to=year+'-'+String(curMonth+1).padStart(2,'0')+'-'+String(dim).padStart(2,'0');
+  monthMods={};
+  try{
+    const rows=await supa.get('horarios_dia',
+      'fecha=gte.'+from+'&fecha=lte.'+to+'&personal_id=eq.'+p.db_id);
+    rows.forEach(r=>{ monthMods[new Date(r.fecha).getDate()]=r; });
+  }catch(e){ console.error(e); }
+
+  // Count actual working days (excluding eliminated, including added)
+  let workCount=0, totalH=0;
+  for(let d=1;d<=dim;d++){
+    const date=new Date(year,curMonth,d);
+    const mod=monthMods[d];
+    const wasAvail=isAvail(p,date);
+    const isElim=mod&&mod.estado==='eliminado';
+    const isAdded=mod&&mod.estado==='añadido';
+    const works=(wasAvail&&!isElim)||isAdded;
+    if(works){
+      workCount++;
+      const hor=mod&&mod.slots&&mod.slots.length
+        ?(()=>{const s=slotsToHorario(new Set(mod.slots.map(Number)));return s.entrada+'-'+s.salida;})()
+        :p.hor;
+      totalH+=parseShifts(hor).reduce((a,s)=>a+calcH(s.entrada,s.salida),0);
+    }
+  }
+
   document.getElementById('stats-row').innerHTML=
-    '<div class="stat-c"><div class="stat-v">'+workDays.size+'</div><div class="stat-l">Días</div></div>'+
+    '<div class="stat-c"><div class="stat-v">'+workCount+'</div><div class="stat-l">Días</div></div>'+
     '<div class="stat-c"><div class="stat-v">'+totalH+'</div><div class="stat-l">Horas</div></div>'+
     '<div class="stat-c"><div class="stat-v">'+(isEvening(p.hor)?'Tarde':'Día')+'</div><div class="stat-l">Turno</div></div>';
   document.getElementById('days-content').innerHTML='<div id="cal-wrap"></div><div id="day-detail"></div>';
@@ -409,14 +438,30 @@ function renderCal(){
   for(let i=0;i<startDow;i++) html+='<div></div>';
   for(let d=1;d<=dim;d++){
     const date=new Date(year,curMonth,d);
-    const works=isAvail(p,date);
+    const mod=monthMods[d];
+    const wasAvail=isAvail(p,date);
+    const isElim=mod&&mod.estado==='eliminado';
+    const isAdded=mod&&mod.estado==='añadido';
+    const hasChange=!!mod; // any DB record = change from default
+    const works=(wasAvail&&!isElim)||isAdded;
     const isWE=date.getDay()===0||date.getDay()===6;
     const isSel=selD===d;
     let bg,numColor,dot='';
-    if(isSel){bg=color;numColor='#fff';}
-    else if(works){bg=color+'28';numColor=isWE?'var(--accent)':'var(--text)';dot='<div style="width:5px;height:5px;border-radius:50%;background:'+color+';margin:2px auto 0"></div>';}
-    else{bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';}
-    const border=works&&!isSel?'0.5px solid '+color+'88':'0.5px solid var(--border)';
+    if(isSel){
+      bg=color;numColor='#fff';
+    } else if(works){
+      // Works: blue tint background
+      bg=color+'22';
+      numColor=isWE?'var(--accent)':'var(--text)';
+      // Dot: blue=no changes, red=has changes
+      const dotColor=hasChange?'#d42020':color;
+      dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>';
+    } else {
+      // Doesn't work (or eliminated): white background, no dot
+      bg='var(--bg2)';
+      numColor=isWE?'var(--accent)':'var(--text2)';
+    }
+    const border=works&&!isSel?'0.5px solid '+color+'55':'0.5px solid var(--border)';
     html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="border-radius:8px;background:'+bg+';border:'+border+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px">'
       +'<div style="font-size:14px;font-weight:'+(works||isSel?700:400)+';color:'+numColor+'">'+d+'</div>'+dot+'</div>';
   }
@@ -483,6 +528,14 @@ async function selectDay(date){
     '<div class="day-card" style="margin-top:4px"><div class="day-card-header"><div class="day-card-title">'+label+'</div><div class="day-card-sub">'+hTot+' horas trabajadas</div></div>'
     +'<div class="day-card-body">'+shiftsHtml+'<div class="companions-title">Compañeros en tu turno</div>'+companionsHtml+'</div></div>';
   setTimeout(()=>{const el=document.getElementById('day-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},50);
+  // Refresh calendar dots after viewing day detail
+  try{
+    const rows=await supa.get('horarios_dia',
+      'fecha=eq.'+fmtD(date)+'&personal_id=eq.'+p.db_id);
+    if(rows.length) monthMods[date.getDate()]=rows[0];
+    else delete monthMods[date.getDate()];
+    renderCal();
+  }catch(e){}
 }
 
 async function init(){
