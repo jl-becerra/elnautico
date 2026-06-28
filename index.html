@@ -145,9 +145,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 // ── SUPABASE ────────────────────────────────────────────────────
 // ── SUPABASE CONFIG ─────────────────────────────────────────────
-// Sustituye sb_publishable_Kzp4EdkK5b6J9qMI5YZwaQ_L1Vsafff por tu anon/public key de Supabase
+// Sustituye TU_SUPABASE_KEY por tu anon/public key de Supabase
 const SUPA_URL = 'https://ygljrtonvowmgidfdect.supabase.co';
-const SUPA_KEY = 'sb_publishable_Kzp4EdkK5b6J9qMI5YZwaQ_L1Vsafff';
+const SUPA_KEY = 'TU_SUPABASE_KEY';
 
 const supa = {
   headers: {
@@ -457,9 +457,11 @@ function renderCal(){
       const dotColor=hasChange?'#d42020':'#18a050';
       dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>';
     } else {
-      // Doesn't work (or eliminated): white background, no dot
+      // Doesn't work: white background
       bg='var(--bg2)';
       numColor=isWE?'var(--accent)':'var(--text2)';
+      // Red dot if eliminated (has a DB record marking them as removed)
+      if(isElim) dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
     }
     const border=works&&!isSel?'0.5px solid '+color+'55':'0.5px solid var(--border)';
     html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="border-radius:8px;background:'+bg+';border:'+border+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px">'
