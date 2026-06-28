@@ -492,6 +492,7 @@ async function selectDay(date){
   // Apply DB modifications to this worker's schedule for this day
   const mods=await loadDayMods(fmtD(date));
   const myMod=mods.find(m=>m.personal_id===p.db_id);
+  const label=DAYS_L[date.getDay()]+' '+date.getDate()+' de '+MONTHS_G[date.getMonth()];
 
   // If worker was removed or on sick leave
   if(myMod&&(myMod.estado==='eliminado'||myMod.estado==='baja')){
@@ -518,7 +519,6 @@ async function selectDay(date){
   }
   const shifts=parseShifts(effectiveHor);
   const hTot=shifts.reduce((a,s)=>a+calcH(s.entrada,s.salida),0);
-  const label=DAYS_L[date.getDay()]+' '+date.getDate()+' de '+MONTHS_G[date.getMonth()];
   const myIsEvening=isEvening(effectiveHor);
   const companions=STAFF.filter(other=>{
     if(other.id===p.id)return false;
