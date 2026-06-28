@@ -145,9 +145,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 // ── SUPABASE ────────────────────────────────────────────────────
 // ── SUPABASE CONFIG ─────────────────────────────────────────────
-// Sustituye sb_publishable_Kzp4EdkK5b6J9qMI5YZwaQ_L1Vsafff por tu anon/public key de Supabase
+// Sustituye TU_SUPABASE_KEY por tu anon/public key de Supabase
 const SUPA_URL = 'https://ygljrtonvowmgidfdect.supabase.co';
-const SUPA_KEY = 'sb_publishable_Kzp4EdkK5b6J9qMI5YZwaQ_L1Vsafff';
+const SUPA_KEY = 'TU_SUPABASE_KEY';
 
 const supa = {
   headers: {
@@ -440,10 +440,17 @@ async function selectDay(date){
   // Apply DB modifications to this worker's schedule for this day
   const mods=await loadDayMods(fmtD(date));
   const myMod=mods.find(m=>m.personal_id===p.db_id);
+
+  // If worker was removed from this day, show as not working
+  if(myMod&&myMod.estado==='eliminado'){
+    document.getElementById('day-detail').innerHTML=
+      '<div style="text-align:center;color:var(--text2);padding:20px;font-size:14px">No trabajas este día</div>';
+    return;
+  }
+
   let effectiveHor=p.hor;
-  if(myMod&&myMod.estado!=='eliminado'){
+  if(myMod){
     if(myMod.slots&&myMod.slots.length){
-      // Use saved slots as ground truth for half-hour precision
       const s=slotsToHorario(new Set(myMod.slots.map(Number)));
       effectiveHor=s.entrada+'-'+s.salida;
     } else {
@@ -459,7 +466,13 @@ async function selectDay(date){
     if(!isAvail(other,date))return false;
     const otherMod=mods.find(m=>m.personal_id===other.db_id);
     if(otherMod&&otherMod.estado==='eliminado') return false;
-    const otherHor=otherMod?(otherMod.entrada+'-'+otherMod.salida):other.hor;
+    let otherHor=other.hor;
+    if(otherMod&&otherMod.slots&&otherMod.slots.length){
+      const s=slotsToHorario(new Set(otherMod.slots.map(Number)));
+      otherHor=s.entrada+'-'+s.salida;
+    } else if(otherMod){
+      otherHor=otherMod.entrada+'-'+otherMod.salida;
+    }
     return isEvening(otherHor)===myIsEvening;
   });
   const shiftsHtml=shifts.map(s=>'<div class="shift-block"><div class="shift-color" style="background:'+BC[p.id%26]+'"></div><div class="shift-info"><div class="shift-time">'+s.entrada+' – '+s.salida+'</div><div class="shift-hours">'+calcH(s.entrada,s.salida)+' horas</div></div></div>').join('');
