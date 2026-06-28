@@ -444,7 +444,7 @@ function renderCal(){
     const isElim=mod&&mod.estado==='eliminado';
     const isBaja=mod&&mod.estado==='baja';
     const isAdded=mod&&mod.estado==='añadido';
-    const hasChange=!!mod; // any DB record = change from default
+    const hasChange=!!(mod&&mod.estado!=='activo'); // activo = restored to default, no change
     const works=(wasAvail&&!isElim&&!isBaja)||isAdded;
     const isWE=date.getDay()===0||date.getDay()===6;
     const isSel=selD===d;
