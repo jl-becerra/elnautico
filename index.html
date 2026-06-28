@@ -453,8 +453,8 @@ function renderCal(){
       // Works: blue tint background
       bg=color+'22';
       numColor=isWE?'var(--accent)':'var(--text)';
-      // Dot: blue=no changes, red=has changes
-      const dotColor=hasChange?'#d42020':color;
+      // Dot: green=no changes, red=has changes
+      const dotColor=hasChange?'#d42020':'#18a050';
       dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>';
     } else {
       // Doesn't work (or eliminated): white background, no dot
