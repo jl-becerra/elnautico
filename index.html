@@ -403,8 +403,9 @@ async function renderMonth(){
     const mod=monthMods[d];
     const wasAvail=isAvail(p,date);
     const isElim=mod&&mod.estado==='eliminado';
+    const isBaja=mod&&mod.estado==='baja';
     const isAdded=mod&&mod.estado==='añadido';
-    const works=(wasAvail&&!isElim)||isAdded;
+    const works=(wasAvail&&!isElim&&!isBaja)||isAdded;
     if(works){
       workCount++;
       const hor=mod&&mod.slots&&mod.slots.length
@@ -441,9 +442,10 @@ function renderCal(){
     const mod=monthMods[d];
     const wasAvail=isAvail(p,date);
     const isElim=mod&&mod.estado==='eliminado';
+    const isBaja=mod&&mod.estado==='baja';
     const isAdded=mod&&mod.estado==='añadido';
     const hasChange=!!mod; // any DB record = change from default
-    const works=(wasAvail&&!isElim)||isAdded;
+    const works=(wasAvail&&!isElim&&!isBaja)||isAdded;
     const isWE=date.getDay()===0||date.getDay()===6;
     const isSel=selD===d;
     let bg,numColor,dot='';
@@ -461,7 +463,10 @@ function renderCal(){
       bg='var(--bg2)';
       numColor=isWE?'var(--accent)':'var(--text2)';
       // Red dot if eliminated (has a DB record marking them as removed)
-      if(isElim) dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
+      if(isElim||isBaja){
+        dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
+        if(isBaja) bg=color+'66'; // darker tint for baja days
+      }
     }
     const border=works&&!isSel?'0.5px solid '+color+'55':'0.5px solid var(--border)';
     html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="border-radius:8px;background:'+bg+';border:'+border+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px">'
@@ -488,10 +493,17 @@ async function selectDay(date){
   const mods=await loadDayMods(fmtD(date));
   const myMod=mods.find(m=>m.personal_id===p.db_id);
 
-  // If worker was removed from this day, show as not working
-  if(myMod&&myMod.estado==='eliminado'){
+  // If worker was removed or on sick leave
+  if(myMod&&(myMod.estado==='eliminado'||myMod.estado==='baja')){
+    const isBaja=myMod.estado==='baja';
     document.getElementById('day-detail').innerHTML=
-      '<div style="text-align:center;color:var(--text2);padding:20px;font-size:14px">No trabajas este día</div>';
+      '<div class="day-card" style="margin-top:4px"><div class="day-card-header">'
+      +'<div class="day-card-title">'+label+'</div>'
+      +'</div><div class="day-card-body" style="text-align:center;padding:24px 14px">'
+      +(isBaja
+        ?'<div style="font-size:32px;margin-bottom:8px">🏥</div><div style="font-size:16px;font-weight:700;color:#888">Baja médica</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Este día estás de baja</div>'
+        :'<div style="font-size:32px;margin-bottom:8px">❌</div><div style="font-size:16px;font-weight:700;color:var(--text2)">No trabajas este día</div>')
+      +'</div></div>';
     return;
   }
 
