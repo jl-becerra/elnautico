@@ -453,25 +453,18 @@ function renderCal(){
     let bg,numColor,dot='';
     if(isSel){
       bg=color;numColor='#fff';
+    } else if(isVac){
+      bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';
+      dot='<div style="width:6px;height:6px;border-radius:50%;background:#18a050;margin:2px auto 0"></div>';
+    } else if(isBaja||isElim){
+      bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';
+      dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
     } else if(works){
-      // Works: blue tint background
-      bg=color+'22';
-      numColor=isWE?'var(--accent)':'var(--text)';
-      // Dot: green=no changes, red=has changes
+      bg=color+'22';numColor=isWE?'var(--accent)':'var(--text)';
       const dotColor=hasChange?'#d42020':'#18a050';
       dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>';
     } else {
-      // Doesn't work: white background
-      bg='var(--bg2)';
-      numColor=isWE?'var(--accent)':'var(--text2)';
-      // Red dot if eliminated (has a DB record marking them as removed)
-      if(isElim||isBaja){
-        dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
-      } else if(isVac){
-        dot='<div style="width:6px;height:6px;border-radius:50%;background:#18a050;margin:2px auto 0"></div>';
-        bg='var(--bg2)';
-        numColor=isWE?'var(--accent)':'var(--text2)';
-      }
+      bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';
     }
     const border=works&&!isSel?'0.5px solid '+color+'55':'0.5px solid var(--border)';
     const numStyle='font-size:14px;font-weight:'+(works||isSel?700:400)+';color:'+numColor+';';
