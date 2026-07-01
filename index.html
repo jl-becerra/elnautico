@@ -404,8 +404,9 @@ async function renderMonth(){
     const wasAvail=isAvail(p,date);
     const isElim=mod&&mod.estado==='eliminado';
     const isBaja=mod&&mod.estado==='baja';
+    const isVac=mod&&mod.estado==='vacaciones';
     const isAdded=mod&&mod.estado==='añadido';
-    const works=(wasAvail&&!isElim&&!isBaja)||isAdded;
+    const works=(wasAvail&&!isElim&&!isBaja)||isAdded||isVac;
     if(works){
       workCount++;
       const hor=mod&&mod.slots&&mod.slots.length
@@ -443,9 +444,10 @@ function renderCal(){
     const wasAvail=isAvail(p,date);
     const isElim=mod&&mod.estado==='eliminado';
     const isBaja=mod&&mod.estado==='baja';
+    const isVac=mod&&mod.estado==='vacaciones';
     const isAdded=mod&&mod.estado==='añadido';
-    const hasChange=!!(mod&&mod.estado!=='activo'); // activo = restored to default, no change
-    const works=(wasAvail&&!isElim&&!isBaja)||isAdded;
+    const hasChange=!!(mod&&mod.estado!=='activo'); // activo = restored, no visual change
+    const works=(wasAvail&&!isElim&&!isBaja)||isAdded||isVac;
     const isWE=date.getDay()===0||date.getDay()===6;
     const isSel=selD===d;
     let bg,numColor,dot='';
@@ -465,6 +467,9 @@ function renderCal(){
       // Red dot if eliminated (has a DB record marking them as removed)
       if(isElim||isBaja){
         dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
+      } else if(isVac){
+        // Vacaciones: still working (counts for pay) — show with green palm tree dot
+        dot='<div style="width:6px;height:6px;border-radius:50%;background:#18a050;margin:2px auto 0"></div>';
       }
     }
     const border=works&&!isSel?'0.5px solid '+color+'55':'0.5px solid var(--border)';
@@ -502,13 +507,16 @@ async function selectDay(date){
   const label=DAYS_L[date.getDay()]+' '+date.getDate()+' de '+MONTHS_G[date.getMonth()];
 
   // If worker was removed or on sick leave
-  if(myMod&&(myMod.estado==='eliminado'||myMod.estado==='baja')){
+  if(myMod&&(myMod.estado==='eliminado'||myMod.estado==='baja'||myMod.estado==='vacaciones')){
     const isBaja=myMod.estado==='baja';
+    const isVac=myMod.estado==='vacaciones';
     document.getElementById('day-detail').innerHTML=
       '<div class="day-card" style="margin-top:4px"><div class="day-card-header">'
       +'<div class="day-card-title">'+label+'</div>'
       +'</div><div class="day-card-body" style="text-align:center;padding:24px 14px">'
-      +(isBaja
+      +(isVac
+        ?'<div style="font-size:32px;margin-bottom:8px">🏖️</div><div style="font-size:16px;font-weight:700;color:#18a050">Vacaciones</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Este día estás de vacaciones</div>'
+        :isBaja
         ?'<div style="font-size:32px;margin-bottom:8px">🏥</div><div style="font-size:16px;font-weight:700;color:#888">Baja médica</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Este día estás de baja</div>'
         :'<div style="font-size:32px;margin-bottom:8px">❌</div><div style="font-size:16px;font-weight:700;color:var(--text2)">No trabajas este día</div>')
       +'</div></div>';
