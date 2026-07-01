@@ -505,6 +505,16 @@ async function selectDay(date){
   const mods=await loadDayMods(fmtD(date));
   const myMod=mods.find(m=>m.personal_id===p.db_id);
   const label=DAYS_L[date.getDay()]+' '+date.getDate()+' de '+MONTHS_G[date.getMonth()];
+  const wasAvail=isAvail(p,date);
+
+  // If added worker was deleted from DB: no record + not in base schedule → reset
+  if(!wasAvail&&!myMod){
+    delete monthMods[date.getDate()];
+    renderCal();
+    document.getElementById('day-detail').innerHTML=
+      '<div style="text-align:center;color:var(--text2);padding:20px;font-size:14px">No trabajas este día</div>';
+    return;
+  }
 
   // If worker was removed or on sick leave
   if(myMod&&(myMod.estado==='eliminado'||myMod.estado==='baja'||myMod.estado==='vacaciones')){
@@ -568,7 +578,7 @@ async function selectDay(date){
   try{
     const rows=await supa.get('horarios_dia',
       'fecha=eq.'+fmtD(date)+'&personal_id=eq.'+p.db_id);
-    if(rows.length) monthMods[date.getDate()]=rows[0];
+    if(rows.length && rows[0].estado!=='activo') monthMods[date.getDate()]=rows[0];
     else delete monthMods[date.getDate()];
     renderCal();
   }catch(e){}
