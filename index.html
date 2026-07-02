@@ -461,8 +461,11 @@ function renderCal(){
       dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
     } else if(works){
       bg=color+'22';numColor=isWE?'var(--accent)':'var(--text)';
-      const dotColor=hasChange?'#d42020':'#18a050';
-      dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>';
+        const dotColor=hasChange?'#d42020':'#18a050';
+      const zonaLetter=mod&&mod.zona&&mod.zona!=='nautico'
+        ?'<div style="font-size:9px;font-weight:700;color:'+(mod.zona==='cocteleria'?'#7020c8':'#10a8a0')+';line-height:1;margin-top:1px">'+(mod.zona==='cocteleria'?'K':'O')+'</div>'
+        :'';
+      dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>'+zonaLetter;
     } else {
       bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';
     }
