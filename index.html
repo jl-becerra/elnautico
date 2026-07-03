@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Náutico · Mi horario v1.1</title>
+<title>El Náutico · Mi horario v1.2</title>
 <style>
 :root{
   --bg:#f5f5f7;--bg2:#fff;--bg3:#e8e8ed;
@@ -472,17 +472,11 @@ function renderCal(){
       bg=color;numColor='#fff';
     } else if(isVac){
       bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';
-      dot='<div style="width:6px;height:6px;border-radius:50%;background:#18a050;margin:2px auto 0"></div>';
     } else if(isBaja||isElim){
       bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';
-      dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
     } else if(works){
       bg=color+'22';numColor=isWE?'var(--accent)':'var(--text)';
-        const dotColor=hasChange?'#d42020':'#18a050';
-      const zonaLetter=mod&&mod.zona&&mod.zona!=='nautico'
-        ?'<div style="font-size:9px;font-weight:700;color:'+(mod.zona==='cocteleria'?'#7020c8':'#10a8a0')+';line-height:1;margin-top:1px">'+(mod.zona==='cocteleria'?'K':'O')+'</div>'
-        :'';
-      dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>'+zonaLetter;
+      // dot already calculated above with zona_base fallback
     } else {
       bg='var(--bg2)';numColor=isWE?'var(--accent)':'var(--text2)';
     }
