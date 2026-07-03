@@ -339,7 +339,7 @@ function initials(p){return(p.nombre[0]+(p.ape?p.ape[0]:'')).toUpperCase()}
 // ── LOGIN ──────────────────────────────────────────────────────────
 function buildLogin(){
   const list=document.getElementById('login-list');
-  list.innerHTML=STAFF.map(p=>`
+  list.innerHTML=[...STAFF].sort((a,b)=>a.ape.localeCompare(b.ape,'es')).map(p=>`
     <button class="login-btn" onclick="login(${p.id})">
       <div class="login-avatar" style="background:${BC[p.id%26]}">${initials(p)}</div>
       <div>
@@ -451,6 +451,22 @@ function renderCal(){
     const isWE=date.getDay()===0||date.getDay()===6;
     const isSel=selD===d;
     let bg,numColor,dot='';
+    // Calculate dot/letter first regardless of selection
+    if(isVac){
+      extra='<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 100 100" preserveAspectRatio="none"><text x="50" y="72" text-anchor="middle" font-size="68" font-weight="900" fill="#18a050" opacity="0.35" font-family="Arial,sans-serif">V</text></svg>';
+      dot='<div style="width:6px;height:6px;border-radius:50%;background:#18a050;margin:2px auto 0"></div>';
+    } else if(isBaja||isElim){
+      if(isBaja) extra='<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="5" y1="5" x2="95" y2="95" stroke="#d42020" stroke-width="5" stroke-linecap="round"/><line x1="95" y1="5" x2="5" y2="95" stroke="#d42020" stroke-width="5" stroke-linecap="round"/></svg>';
+      dot='<div style="width:6px;height:6px;border-radius:50%;background:#d42020;margin:2px auto 0"></div>';
+    } else if(works){
+      const dotColor=hasChange?'#d42020':'#18a050';
+      const zonaW=mod?mod.zona||'nautico':p.zona_base||'nautico';
+      const zonaLetterW=zonaW!=='nautico'
+        ?'<div style="font-size:9px;font-weight:700;color:'+(zonaW==='cocteleria'?'#7020c8':'#10a8a0')+';line-height:1;margin-top:1px">'+(zonaW==='cocteleria'?'K':'O')+'</div>'
+        :'';
+      dot='<div style="width:6px;height:6px;border-radius:50%;background:'+dotColor+';margin:2px auto 0"></div>'+zonaLetterW;
+    }
+    // Now set background
     if(isSel){
       bg=color;numColor='#fff';
     } else if(isVac){
