@@ -215,6 +215,7 @@ function dbToStaff(p) {
     puesto: p.puesto,
     categoria: p.categoria,
     zona: p.zona,
+    zona_base: p.zona_base||'nautico',
     eficiencia: p.eficiencia,
     honorarios: p.honorarios,
     hSem: p.horas_sem,
@@ -608,4 +609,4 @@ async function init(){
 init();
 </script>
 </body>
-</html> 
+</html>
