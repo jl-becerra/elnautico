@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Náutico · Mi horario v1.3</title>
+<title>El Náutico · Mi horario v1.5</title>
 <style>
 :root{
   --bg:#f5f5f7;--bg2:#fff;--bg3:#e8e8ed;
@@ -284,6 +284,14 @@ function fmtD(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'
 function parseD(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
 function dowL(d){return d.getDay()===0?6:d.getDay()-1}
 
+let _confirmadoHasta=null;
+async function loadConfirmadoHasta(){
+  try{
+    const rows=await supa.get('config','key=eq.confirmado_hasta');
+    _confirmadoHasta=rows[0]?.value||null;
+  }catch(e){_confirmadoHasta=null;}
+}
+function isConfirmado(dateStr){ return _confirmadoHasta&&dateStr<=_confirmadoHasta; }
 function isAvail(p,date){
   if(date<parseD(p.inicio)||date>parseD(p.fin))return false;
   return p.dias.includes(dowL(date));
@@ -497,7 +505,7 @@ function renderCal(){
         +'<text x="50" y="72" text-anchor="middle" font-size="68" font-weight="900" fill="#18a050" opacity="0.35" font-family="Arial,sans-serif">V</text>'
         +'</svg>'
       :'';
-    html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="position:relative;border-radius:8px;background:'+bg+';border:'+border+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px;overflow:hidden">'
+    html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="position:relative;border-radius:8px;background:'+bg+';border:'+border+';outline:'+(isConfirmado(fmtD(date))?'2px solid #4a90d9':'')+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px;overflow:hidden">'
       +(p.come&&works?'<span style="position:absolute;top:1px;right:2px;font-size:7px">🍔</span>':'')+(p.duerme&&isInPeriod(p,date)&&(p.hSem>=40)?'<span style="position:absolute;top:1px;left:2px;font-size:7px">🛏</span>':'')
       +bajaOverlay
       +'<div style="'+numStyle+'position:relative;z-index:1">'+d+'</div>'+dot+'</div>';
@@ -515,13 +523,13 @@ async function selectDay(date){
   selDate=date;
   renderCal();
   const p=curUser;
-  if(!isAvail(p,date)){
-    document.getElementById('day-detail').innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;font-size:14px">No trabajas este día</div>';
-    return;
-  }
   // Apply DB modifications to this worker's schedule for this day
   const mods=await loadDayMods(fmtD(date));
   const myMod=mods.find(m=>m.personal_id===p.db_id);
+  if(!isAvail(p,date)&&(!myMod||myMod.estado==='eliminado'||myMod.estado==='baja')){
+    document.getElementById('day-detail').innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;font-size:14px">No trabajas este día</div>';
+    return;
+  }
   const label=DAYS_L[date.getDay()]+' '+date.getDate()+' de '+MONTHS_G[date.getMonth()];
   const wasAvail=isAvail(p,date);
 
@@ -540,7 +548,7 @@ async function selectDay(date){
     const isVac=myMod.estado==='vacaciones';
     document.getElementById('day-detail').innerHTML=
       '<div class="day-card" style="margin-top:4px"><div class="day-card-header">'
-      +'<div class="day-card-title">'+label+'</div>'
+      +'<div class="day-card-title">'+label+(isConfirmado(fmtD(selDate))?' <span style="font-size:12px;font-weight:400;color:#4a90d9">✓ comprobado</span>':'')+'</div>'
       +'</div><div class="day-card-body" style="text-align:center;padding:24px 14px">'
       +(isVac
         ?'<div style="font-size:32px;margin-bottom:8px">🏖️</div><div style="font-size:16px;font-weight:700;color:#18a050">Vacaciones</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Este día estás de vacaciones</div>'
@@ -589,7 +597,7 @@ async function selectDay(date){
     ?'<div style="font-size:13px;color:var(--text2);padding:8px 0">Sin compañeros en tu turno este día</div>'
     :companions.map(c=>'<div class="companion-row"><div class="comp-avatar" style="background:'+BC[c.id%26]+'">'+initials(c)+'</div><div><div class="comp-name">'+c.nombre+' '+c.ape+'</div><div class="comp-time">'+c.puesto+' · '+parseShifts(c.hor).map(s=>s.entrada+'–'+s.salida).join(' / ')+'</div></div></div>').join('');
   document.getElementById('day-detail').innerHTML=
-    '<div class="day-card" style="margin-top:4px"><div class="day-card-header"><div class="day-card-title">'+label+'</div><div class="day-card-sub">'+hTot+' horas trabajadas</div></div>'
+    '<div class="day-card" style="margin-top:4px"><div class="day-card-header"><div class="day-card-title">'+label+(isConfirmado(fmtD(selDate))?' <span style="font-size:12px;font-weight:400;color:#4a90d9">✓ comprobado</span>':'')+'</div><div class="day-card-sub">'+hTot+' horas trabajadas</div></div>'
     +'<div class="day-card-body">'+shiftsHtml+'<div class="companions-title">Compañeros en tu turno</div>'+companionsHtml+'</div></div>';
   setTimeout(()=>{const el=document.getElementById('day-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},50);
   // Refresh calendar dots after viewing day detail
