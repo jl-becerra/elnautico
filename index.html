@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Náutico · Mi horario v1.2</title>
+<title>El Náutico · Mi horario v1.3</title>
 <style>
 :root{
   --bg:#f5f5f7;--bg2:#fff;--bg3:#e8e8ed;
@@ -216,6 +216,8 @@ function dbToStaff(p) {
     categoria: p.categoria,
     zona: p.zona,
     zona_base: p.zona_base||'nautico',
+    come: !!p.come,
+    duerme: !!p.duerme,
     eficiencia: p.eficiencia,
     honorarios: p.honorarios,
     hSem: p.horas_sem,
@@ -286,6 +288,9 @@ function isAvail(p,date){
   if(date<parseD(p.inicio)||date>parseD(p.fin))return false;
   return p.dias.includes(dowL(date));
 }
+function isInPeriod(p,date){
+  return date>=parseD(p.inicio)&&date<=parseD(p.fin);
+}
 
 function parseShifts(hor){
   // returns [{entrada, salida, slots}]
@@ -340,7 +345,7 @@ function initials(p){return(p.nombre[0]+(p.ape?p.ape[0]:'')).toUpperCase()}
 // ── LOGIN ──────────────────────────────────────────────────────────
 function buildLogin(){
   const list=document.getElementById('login-list');
-  list.innerHTML=[...STAFF].sort((a,b)=>a.ape.localeCompare(b.ape,'es')).map(p=>`
+  list.innerHTML=[...STAFF].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')).map(p=>`
     <button class="login-btn" onclick="login(${p.id})">
       <div class="login-avatar" style="background:${BC[p.id%26]}">${initials(p)}</div>
       <div>
@@ -493,6 +498,7 @@ function renderCal(){
         +'</svg>'
       :'';
     html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="position:relative;border-radius:8px;background:'+bg+';border:'+border+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px;overflow:hidden">'
+      +(p.come&&works?'<span style="position:absolute;top:1px;right:2px;font-size:7px">🍔</span>':'')+(p.duerme&&isInPeriod(p,date)&&(p.hSem>=40)?'<span style="position:absolute;top:1px;left:2px;font-size:7px">🛏</span>':'')
       +bajaOverlay
       +'<div style="'+numStyle+'position:relative;z-index:1">'+d+'</div>'+dot+'</div>';
   }
