@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Náutico · Mi horario v1.6</title>
+<title>El Náutico · Mi horario v1.7</title>
 <style>
 :root{
   --bg:#f5f5f7;--bg2:#fff;--bg3:#e8e8ed;
@@ -505,7 +505,15 @@ function renderCal(){
         +'<text x="50" y="72" text-anchor="middle" font-size="68" font-weight="900" fill="#18a050" opacity="0.35" font-family="Arial,sans-serif">V</text>'
         +'</svg>'
       :'';
-    html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="position:relative;border-radius:8px;background:'+bg+';border:'+border+';outline:'+(isConfirmado(fmtD(date))?'2px solid #4a90d9':'')+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px;overflow:hidden">'
+    const kT=fmtD(date);
+    const isConf=isConfirmado(kT);
+    const isBeyond=_confirmadoHasta&&kT>_confirmadoHasta;
+    // Beyond confirmed date: show neutral grey cell
+    if(isBeyond){
+      html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="position:relative;border-radius:8px;background:var(--bg2);border:0.5px solid var(--border);padding:6px 2px;text-align:center;cursor:pointer;min-height:46px;overflow:hidden;opacity:0.45">'        +'<div style="font-size:12px;font-weight:500;color:var(--text2)">'+d+'</div></div>';
+      continue;
+    }
+    html+='<div onclick="selectDay(new Date('+year+','+curMonth+','+d+'))" style="position:relative;border-radius:8px;background:'+bg+';border:'+border+';outline:'+(isConf?'2px solid #4a90d9':'')+';padding:6px 2px;text-align:center;cursor:pointer;min-height:46px;overflow:hidden">'
       +(p.come&&works?'<span style="position:absolute;top:1px;right:2px;font-size:7px">🍔</span>':'')+(p.duerme&&isInPeriod(p,date)&&(p.hSem>=40)?'<span style="position:absolute;top:1px;left:2px;font-size:7px">🛏</span>':'')
       +bajaOverlay
       +'<div style="'+numStyle+'position:relative;z-index:1">'+d+'</div>'+dot+'</div>';
@@ -523,6 +531,11 @@ async function selectDay(date){
   selDate=date;
   renderCal();
   const p=curUser;
+  // Beyond confirmed date: show sin datos
+  if(_confirmadoHasta&&fmtD(date)>_confirmadoHasta){
+    document.getElementById('day-detail').innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;font-size:14px">Sin datos — horario no confirmado aún</div>';
+    return;
+  }
   // Apply DB modifications to this worker's schedule for this day
   const mods=await loadDayMods(fmtD(date));
   const myMod=mods.find(m=>m.personal_id===p.db_id);
