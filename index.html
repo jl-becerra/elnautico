@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Náutico · Mi horario v1.9</title>
+<title>El Náutico · Mi horario v2.0</title>
 <style>
 :root{
   --bg:#f5f5f7;--bg2:#fff;--bg3:#e8e8ed;
@@ -616,7 +616,7 @@ async function selectDay(date){
       effectiveHor=otherMod.entrada+'-'+otherMod.salida;
     }
     return {...other, hor:effectiveHor};
-  });
+  }).sort((a,b)=>startSlotNorm(a.hor.split('-')[0])-startSlotNorm(b.hor.split('-')[0]));
   const companions=companionsData;
   const shiftsHtml=shifts.map(s=>'<div class="shift-block"><div class="shift-color" style="background:'+BC[p.id%26]+'"></div><div class="shift-info"><div class="shift-time">'+s.entrada+' – '+s.salida+'</div><div class="shift-hours">'+calcH(s.entrada,s.salida)+' horas</div></div></div>').join('');
   const companionsHtml=companions.length===0
