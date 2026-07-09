@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Náutico · Mi horario v1.8</title>
+<title>El Náutico · Mi horario v1.9</title>
 <style>
 :root{
   --bg:#f5f5f7;--bg2:#fff;--bg3:#e8e8ed;
@@ -591,20 +591,33 @@ async function selectDay(date){
   const shifts=parseShifts(effectiveHor);
   const hTot=shifts.reduce((a,s)=>a+calcH(s.entrada,s.salida),0);
   const myIsEvening=isEvening(effectiveHor);
-  const companions=STAFF.filter(other=>{
+  // Build companions with effective horario
+  const companionsData=STAFF.filter(other=>{
     if(other.id===p.id)return false;
-    if(!isAvail(other,date))return false;
     const otherMod=mods.find(m=>m.personal_id===other.db_id);
-    if(otherMod&&otherMod.estado==='eliminado') return false;
+    if(otherMod&&(otherMod.estado==='eliminado'||otherMod.estado==='baja')) return false;
+    const otherAvail=isAvail(other,date)||(otherMod&&otherMod.estado==='añadido');
+    if(!otherAvail) return false;
     let otherHor=other.hor;
     if(otherMod&&otherMod.slots&&otherMod.slots.length){
       const s=slotsToHorario(new Set(otherMod.slots.map(Number)));
       otherHor=s.entrada+'-'+s.salida;
-    } else if(otherMod){
+    } else if(otherMod&&otherMod.entrada){
       otherHor=otherMod.entrada+'-'+otherMod.salida;
     }
     return isEvening(otherHor)===myIsEvening;
+  }).map(other=>{
+    const otherMod=mods.find(m=>m.personal_id===other.db_id);
+    let effectiveHor=other.hor;
+    if(otherMod&&otherMod.slots&&otherMod.slots.length){
+      const s=slotsToHorario(new Set(otherMod.slots.map(Number)));
+      effectiveHor=s.entrada+'-'+s.salida;
+    } else if(otherMod&&otherMod.entrada){
+      effectiveHor=otherMod.entrada+'-'+otherMod.salida;
+    }
+    return {...other, hor:effectiveHor};
   });
+  const companions=companionsData;
   const shiftsHtml=shifts.map(s=>'<div class="shift-block"><div class="shift-color" style="background:'+BC[p.id%26]+'"></div><div class="shift-info"><div class="shift-time">'+s.entrada+' – '+s.salida+'</div><div class="shift-hours">'+calcH(s.entrada,s.salida)+' horas</div></div></div>').join('');
   const companionsHtml=companions.length===0
     ?'<div style="font-size:13px;color:var(--text2);padding:8px 0">Sin compañeros en tu turno este día</div>'
