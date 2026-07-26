@@ -227,6 +227,7 @@ function dbToStaff(p) {
     hor: p.horario || '',
     inicio: p.fecha_inicio,
     fin: p.fecha_fin,
+    activo: p.activo,
     cat: 'cam'
   };
 }
@@ -258,7 +259,7 @@ let dbLoaded = false;
 async function loadStaff() {
   try {
     const rows = await supa.get('personal', 'order=color_idx.asc');
-    STAFF = rows.map(dbToStaff);
+    STAFF = rows.map(dbToStaff).filter(p=>p.activo!==false);
     dbLoaded = true;
   } catch(e) {
     console.error('Error cargando personal:', e);
@@ -282,7 +283,7 @@ let curMonth=6; // 6=julio, 7=agosto
 let selDate=null;
 
 function fmtD(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-function parseD(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function parseD(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
 function dowL(d){return d.getDay()===0?6:d.getDay()-1}
 
 let _confirmadoHasta=null;
@@ -299,10 +300,12 @@ function getHorForDay(p,date){
 }
 
 function isAvail(p,date){
+  if(!p.inicio||!p.fin)return false;
   if(date<parseD(p.inicio)||date>parseD(p.fin))return false;
   return p.dias.includes(dowL(date));
 }
 function isInPeriod(p,date){
+  if(!p.inicio||!p.fin)return false;
   return date>=parseD(p.inicio)&&date<=parseD(p.fin);
 }
 
